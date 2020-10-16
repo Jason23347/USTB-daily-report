@@ -37,7 +37,8 @@ $ crontab -e
 */20 * * * * /path/to/ustb-report ping
 30 6 * * * /path/to/ustb-report submit
 ```
-其中第一行的意思是每 20 分钟续一次 `SESSION`，因为该 `SESSION` 30 分钟无动作自动过期。
+其中 `/path/to/ustb-report` 是脚本的路径，注意，其必须是**绝对路径**。
+第一行的意思是每 20 分钟续一次 `SESSION`，因为该 `SESSION` 30 分钟无动作自动过期。
 第二行的意思是每天 6:30 的时候提交平安报，你也可以根据自己的需求自由修改。
 
 ## DEBUG
