@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Copyright 2020 Vincente <vincenteliang@foxmail.com>
+# Copyright 2020 Jason <jason23347@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+DEBUG=0
+
+LOG_DIR=/var/log
+LOG_FILE=ustb-report.log
+
+REPORT_HOST=https://isport.ustb.edu.cn
+REPORT_SESSION=
+REPORT_DATA="$(cat ~/report.data)"
+
+if [ $DEBUG -eq 0 ]; then
+        RETRY_FREQUENCY=20 # second
+else
+        RETRY_FREQUENCY=2
+fi
+
+if [ $DEBUG -eq 0 ]; then
+        # open log stream (append)
+        exec 3>>$LOG_DIR/$LOG_FILE
+else
+        exec 3>&2
+fi
+
+write_log() {
+        printf "[%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$1" >&3
+}
+
+mycurl() {
+        message=$(curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
+                -H "X-Requested-With: XMLHttpRequest" \
+                -H "Cookie: JSESSIONID=$REPORT_SESSION" \
+                -d "$REPORT_DATA" |
+                sed 's/.*\"message\":[[:space:]]\+\"//;s/\".*//')
+        str='当天已上报You have submitted today.'
+        write_log "$message"
+
+        [ "$message" == "$str" ]
+        return $?
+}
+
+[ $# -lt 1 ] && {
+        echo "At least 1 argument required." >&2
+        return 1
+}
+
+command=$1
+case $command in
+submit)
+
+        while :; do
+                mycurl
+                [ $? -eq 0 ] && break
+                write_log "Retry will be after ${RETRY_FREQUENCY}(s)."
+                sleep $RETRY_FREQUENCY
+        done
+
+        write_log "Submit succeed."
+        ;;
+ping)
+        while :; do
+                curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
+                        -H "Cookie: JSESSIONID=$REPORT_SESSION" \
+                        -H "X-Requested-With: XMLHttpRequest"
+                [ $? -eq 0 ] && break
+                write_log "Ping failed."
+        done
+        write_log "Ping succeed."
+        ;;
+*)
+        echo "Command $command not found." >&2
+        ;;
+esac
