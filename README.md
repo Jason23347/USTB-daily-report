@@ -26,6 +26,7 @@ m=yqinfo&c=index&a=submit
 echo "平安报 POST 内容" >~/report.data
 ```
 如果你想使用自定义的文件名，你还需要把 `REPORT_DATA` 修改成相应形式。
+其他详细设置见文件 `ustb-report` 开头。
 
 ## Add Cron tasks
 在命令行输入以下指令，

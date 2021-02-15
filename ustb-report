@@ -13,24 +13,54 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+# 1 to turn on debug mode, redirect log stream to stderr
 DEBUG=0
+# Send alert mail or not
+DO_SEND_MAIL=1
+
+MAX_RETRY=5
+REPORT_SESSION=
+# Recieving alert mail
+EMAIL_ADDR=
 
 LOG_DIR=/var/log
-LOG_FILE=ustb-report.log
+LOG_FILE=$LOG_DIR/ustb-report.log
 
 REPORT_HOST=https://isport.ustb.edu.cn
-REPORT_SESSION=
 REPORT_DATA="$(cat ~/report.data)"
 
+# Using mutt by default,
+# change to sendmail if you like
+send_alert_mail() {
+        [ $DO_SEND_MAIL -le 0 ] && return 0
+
+        # Report at most once in an hour
+        local -i timestamp=3600
+        [ -f /tmp/ustb-last-error ] &&
+                timestamp+=$(cat /tmp/ustb-last-error)
+        [ $timestamp -gt $(date +%s) ] && {
+                write_log "Ommitted to send alert mail within 1 hour."
+                return 0
+        }
+        date +%s >/tmp/ustb-last-error
+
+        mutt -s "USTB Report Warning" $EMAIL_ADDR <<END
+An error occured with command $command at $(date +%T).
+Here's the latest log:
+$(tail -n 20 $LOG_FILE)
+
+END
+}
+
 if [ $DEBUG -eq 0 ]; then
-        RETRY_FREQUENCY=20 # second
+        RETRY_FREQUENCY=20 # seconds
 else
         RETRY_FREQUENCY=2
 fi
 
 if [ $DEBUG -eq 0 ]; then
         # open log stream (append)
-        exec 3>>$LOG_DIR/$LOG_FILE
+        exec 3>>$LOG_FILE
 else
         exec 3>&2
 fi
@@ -48,36 +78,50 @@ mycurl() {
         str='当天已上报You have submitted today.'
         write_log "$message"
 
-        [ "$message" == "$str" ]
+        [ "x$message" == "x$str" ]
         return $?
 }
 
 [ $# -lt 1 ] && {
         echo "At least 1 argument required." >&2
-        return 1
+        exit 1
 }
 
 command=$1
 case $command in
 submit)
-
-        while :; do
+        declare -i n=0
+        while [ $n -lt $MAX_RETRY ]; do
                 mycurl
                 [ $? -eq 0 ] && break
                 write_log "Retry will be after ${RETRY_FREQUENCY}(s)."
                 sleep $RETRY_FREQUENCY
+                n+=1
         done
+
+        [ $n -ge $MAX_RETRY ] && {
+                send_alert_mail
+                exit 1
+        }
 
         write_log "Submit succeed."
         ;;
 ping)
-        while :; do
+        declare -i n=0
+        while [ $n -lt $MAX_RETRY ]; do
                 curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
                         -H "Cookie: JSESSIONID=$REPORT_SESSION" \
                         -H "X-Requested-With: XMLHttpRequest"
                 [ $? -eq 0 ] && break
                 write_log "Ping failed."
+                n+=1
         done
+
+        [ $n -ge $MAX_RETRY ] && {
+                send_alert_mail
+                exit 1
+        }
+
         write_log "Ping succeed."
         ;;
 *)
