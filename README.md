@@ -5,7 +5,7 @@ Auto daily health report 自动平安报
 **“平安报”上报内容是学校决策的重要参考之一，务必认真对待。**
 
 ## Collect Data First
-首先，你需要对平安报请求进行一次抓包，具体方法参见[这篇文章](https://blog.vincenteliang.cn/2020/06/01/checkIn_auto/#%E6%8A%93%E5%8C%85-packet-capture)。
+首先，你需要对平安报请求进行一次抓包，具体方法参见[这篇文章](https://blog.vincenteliang.cn/2020/05/31/ustb_checkIn_auto#%E6%8A%93%E5%8C%85-packet-capture)。
 抓包的请求的报文大概如下所示：
 ```
 POST /app.RSPWxClient/index.jsp HTTP/1.1
