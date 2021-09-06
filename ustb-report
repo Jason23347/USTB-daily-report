@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Copyright 2020 Vincente <vincenteliang@foxmail.com>
-# Copyright 2020 Jason <jason23347@gmail.com>
+# Copyright 2020-2021 Jason <jason23347@163.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,6 +17,9 @@
 DEBUG=0
 # Send alert mail or not
 DO_SEND_MAIL=1
+# Randomly delay report submission for 0-${MAX_DELAY} minutes
+RANDOM_DELAY=1
+MAX_DELAY=20
 
 MAX_RETRY=5
 REPORT_SESSION=
@@ -70,6 +73,12 @@ write_log() {
 }
 
 mycurl() {
+        # Random delay
+        if [ ${RANDOM_DELAY:-0} eq 1 ]; then
+                rnd=$(( RANDOM % $MAX_DELAY ))
+                sleep $rnd
+                write_log "Delay for $rnd minutes."
+        fi
         message=$(curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
                 -H "X-Requested-With: XMLHttpRequest" \
                 -H "Cookie: JSESSIONID=$REPORT_SESSION" \
@@ -94,6 +103,8 @@ submit)
         while [ $n -lt $MAX_RETRY ]; do
                 mycurl
                 [ $? -eq 0 ] && break
+                # Disable random delay for retries
+                RANDOM_DELAY=0
                 write_log "Retry will be after ${RETRY_FREQUENCY}(s)."
                 sleep $RETRY_FREQUENCY
                 n+=1
