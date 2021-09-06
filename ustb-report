@@ -75,7 +75,7 @@ write_log() {
 mycurl() {
         # Random delay
         if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
-                rnd=$(( RANDOM % $MAX_DELAY ))
+                rnd=$(( RANDOM % $MAX_DELAY * 60 ))
                 sleep $rnd
                 write_log "Delay for $rnd minutes."
         fi
