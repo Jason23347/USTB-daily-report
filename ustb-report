@@ -75,9 +75,10 @@ write_log() {
 mycurl() {
         # Random delay
         if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
-                rnd=$(( RANDOM % $MAX_DELAY * 60 ))
-                sleep $rnd
+                rnd=$((RANDOM % $MAX_DELAY))
+                delay=$(($rnd * 60))
                 write_log "Delay for $rnd minutes."
+                sleep $delay
         fi
         message=$(curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
                 -H "X-Requested-With: XMLHttpRequest" \
