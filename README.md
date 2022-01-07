@@ -4,6 +4,20 @@ Auto daily health report 自动平安报
 ## WARNING
 **“平安报”上报内容是学校决策的重要参考之一，务必认真对待。**
 
+## Features
+
+- [x] 自动平安报
+- [x] 自动续SESSION
+- [x] 日志记录
+- [x] 邮箱示警
+- [x] 随机延迟（否则每天定时上报有点可疑（？））
+- [ ] 免爬虫获取JSESSIONID
+- [ ] 免爬虫获取上内容
+
+## 一种集成到 Home Assistant (HA) 上的实现
+
+[ustb-daily-with-hass](https://github.com/terrance-liang/ustb-daily-with-hass)
+
 ## Collect Data First
 首先，你需要对平安报请求进行一次抓包，具体方法参见[这篇文章](https://blog.vincenteliang.cn/2020/05/31/ustb_checkIn_auto#%E6%8A%93%E5%8C%85-packet-capture)。
 抓包的请求的报文大概如下所示：
