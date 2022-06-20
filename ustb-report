@@ -80,15 +80,19 @@ mycurl() {
                 write_log "Delay for $rnd minutes."
                 sleep $delay
         fi
-        message=$(curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp \
+        message=$(curl -sL $REPORT_HOST/app.RSPWxClient/index.jsp\?m\=yqinfo\&c\=index\&a\=submit \
                 -H "X-Requested-With: XMLHttpRequest" \
                 -H "Cookie: JSESSIONID=$REPORT_SESSION" \
                 -d "$REPORT_DATA" |
                 sed 's/.*\"message\":[[:space:]]\+\"//;s/\".*//')
-        str='当天已上报You have submitted today.'
-        write_log "$message"
+        success='当天已上报You have submitted today.'
+        expired='<!doctype html><html lang='
 
-        [ "x$message" == "x$str" ]
+        [ "x$message" == "x$expired" ] &&
+                write_log "Session token expired!" ||
+                write_log "$message"
+
+        [ "x$message" == "x$success" ]
         return $?
 }
 
