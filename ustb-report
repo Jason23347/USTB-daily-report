@@ -72,7 +72,7 @@ write_log() {
         printf "[%s] %s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$1" >&3
 }
 
-mycurl() {
+pinganbao() {
         # Random delay
         if [ ${RANDOM_DELAY:-0} -eq 1 ]; then
                 rnd=$((RANDOM % $MAX_DELAY))
@@ -96,6 +96,34 @@ mycurl() {
         return $?
 }
 
+xiaojia() {
+        local xj_id=$(curl -sL "$REPORT_HOST/app.RSPWxClient/index.jsp?m=yqinfo&c=cx&a=init" \
+                -H "X-Requested-With: XMLHttpRequest" \
+                -H "Cookie: JSESSIONID=$REPORT_SESSION" |
+                grep "xjState([0-9]" |
+                sed 's_.*xjState(__;s_).*__')
+
+        local -i code=$(curl -sL "$REPORT_HOST/app.RSPWxClient/index.jsp?m=yqinfo&c=cx&a=xjState" \
+                -H "X-Requested-With: XMLHttpRequest" \
+                -H "Cookie: JSESSIONID=$REPORT_SESSION" \
+                -d "cxId=$xj_id&ApplyAddress=地球" |
+                jq -r '.statusCode')
+
+        [ $code -eq 200 ]
+        return $?
+}
+
+shenqingchuxiao() {
+        local -i code=$(curl -sL "$REPORT_HOST/app.RSPWxClient/index.jsp" \
+                -H "X-Requested-With: XMLHttpRequest" \
+                -H "Cookie: JSESSIONID=$REPORT_SESSION" \
+                -d "m=yqinfo&c=cx&a=add&isDt=0&GoWhere=北京 海淀区 学院路街道 家属区区区区区区区区区区区区区区&CxReason=购买生活必需品&qtsy=undefined" |
+                jq -r '.statusCode')
+
+        [ $code -eq 200 ]
+        return $?
+}
+
 [ $# -lt 1 ] && {
         echo "At least 1 argument required." >&2
         exit 1
@@ -106,7 +134,7 @@ case $command in
 submit)
         declare -i n=0
         while [ $n -lt $MAX_RETRY ]; do
-                mycurl
+                pinganbao
                 [ $? -eq 0 ] && break
                 # Disable random delay for retries
                 RANDOM_DELAY=0
@@ -114,6 +142,8 @@ submit)
                 sleep $RETRY_FREQUENCY
                 n+=1
         done
+
+        xiaojia && shenqingchuxiao
 
         [ $n -ge $MAX_RETRY ] && {
                 send_alert_mail
